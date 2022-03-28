@@ -113,6 +113,52 @@ Search and Verify GPU Items Appears In Resources Page
     Search Items In Resources Section   GPU
     Check GPU Resources
 
+Verify Advanced filtering by status, provider, types from Resources tab is working as expected
+   [Documentation]    check if it is possible to filter items by enabling various filters like status,provider
+   [Tags]    Sanity
+    ...      ODS-489
+    ...      Tier1
+   Click Link    Resources
+   Wait Until Page Contains    Self-managed
+   #Filter by enabled filter
+   Select Checkbox Using Id    enabled-filter-checkbox--check-box
+   @{expected_items} =    Create List    Creating a Jupyter notebook
+   ...    Deploying a sample Python application using Flask and OpenShift
+   ...    How to install Python packages on your notebook server    How to update notebook server settings
+   ...    How to use data from Amazon S3 buckets    How to view installed packages on your notebook server
+   ...    JupyterHub
+   Verify The Cards Using Selector And It Value    selector=pf-c-card__title odh-card__doc-title
+   ...    list_of_items=${expected_items}
+   Deselct Checkbox Using Id    enabled-filter-checkbox--check-box
+   # Filter by application (aka provider)
+   @{expected_items} =    Create List    by Anaconda Commercial Edition
+   Select Checkbox Using Id    Anaconda Commercial Edition--check-box
+   Verify The Cards Using Selector And It Value    selector=pf-c-card__title odh-card__doc-title
+   ...    list_of_items=${expected_items}    index_of_text=1
+   Deselct Checkbox Using Id    id=Anaconda Commercial Edition--check-box
+   # Filter by resource type
+   Select Checkbox Using Id    id=documentation--check-box
+   @{expected_items} =    Create List    Documentation
+   Verify The Cards Using Selector And It Value    selector=pf-c-card__title odh-card__doc-title
+   ...    list_of_items=${expected_items}    index_of_text=2
+   Deselct Checkbox Using Id    id=documentation--check-box
+   # Filter by filter by provider type
+   Select Checkbox Using Id    id=Red Hat managed--check-box
+   @{expected_items} =    Create List    Connecting to Red Hat OpenShift Streams for Apache Kafka
+   ...    Creating a Jupyter notebook    Deploying a sample Python application using Flask and OpenShift
+   ...    How to install Python packages on your notebook server    How to update notebook server settings
+   ...    How to use data from Amazon S3 buckets    How to view installed packages on your notebook server
+   ...    JupyterHub    OpenShift API Management    OpenShift Streams for Apache Kafka    PerceptiLabs
+   ...    Securing a deployed model using Red Hat OpenShift API Management
+   Verify The Cards Using Selector And It Value    selector=pf-c-card__title odh-card__doc-title
+   ...    list_of_items=${expected_items}
+   # Filter by using more than one filter
+   Select Checkbox Using Id    id=documentation--check-box
+   @{expected_items} =    Create List    JupyterHub    OpenShift API Management    OpenShift Streams for Apache Kafka
+   ...    PerceptiLabs
+   Verify The Cards Using Selector And It Value    selector=pf-c-card__title odh-card__doc-title
+   ...    list_of_items=${expected_items}
+ 
 *** Keywords ***
 Verify JupyterHub Card CSS Style
     [Documentation]     Compare the some CSS properties of the Explore page
@@ -170,3 +216,23 @@ Check GPU Resources
         Page Should Not Contain     //a[@href="https://github.com/ContinuumIO/gtc2018-numba"]
     END
 
+Select Checkbox Using Id
+   [Documentation]    Select check-box
+   [Arguments]    ${id}
+   Select Checkbox    id=${id}
+   sleep    10s
+Deselct Checkbox Using Id
+   [Documentation]    Deselect check-box
+   [Arguments]    ${id}
+   Click Element    id=${id}
+   sleep    10s
+ 
+Verify The Cards Using Selector And It Value
+   [Documentation]    virifies the items
+   [Arguments]    ${selector}    ${list_of_items}    ${index_of_text}=0
+   @{items} =    Get WebElements    //div[@class="${selector}"]
+   FOR    ${item}    IN    @{items}
+       @{texts} =    Split String    ${item.text}    \n
+       List Should Contain Value    ${list_of_items}    ${texts}[${index_of_text}]
+   END
+ 
