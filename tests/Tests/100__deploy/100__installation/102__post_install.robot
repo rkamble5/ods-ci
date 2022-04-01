@@ -4,6 +4,7 @@ Documentation       Post install test cases that mainly verify OCP resources and
 Library             String
 Library             OperatingSystem
 Library             OpenShiftCLI
+Library             OpenShiftLibrary
 Resource            ../../../Resources/OCP.resource
 Resource            ../../../Resources/Page/OCPDashboard/OCPDashboard.resource
 Resource            ../../../Resources/Page/ODH/JupyterHub/HighAvailability.robot
@@ -166,7 +167,6 @@ Verify RHODS Release Version Number
     ${version} =  Get RHODS Version
     Should Match Regexp    ${version}    ^[0-9]+\.[0-9]+\.[0-9]+\(-[0-9]+)*$
 
-
 *** Keywords ***
 Verify Cuda Builds Are Completed
     [Documentation]    Verify All Cuda Builds have status as Complete
@@ -204,3 +204,17 @@ Verify BlackboxExporter Includes Oauth Proxy
     @{containers} =    Get Containers    pod_name=${pod}    namespace=redhat-ods-monitoring
     List Should Contain Value    ${containers}    oauth-proxy
     List Should Contain Value    ${containers}    blackbox-exporter
+
+Get Notification Email From Addon-Managed-Odh-Parameters Secret
+    [Documentation]    Extract email form addon-managed-odh-parameters secret
+    ${resp} =    Oc Get  kind=Secret  namespace=redhat-ods-operator  name=addon-managed-odh-parameters
+    ${resp} =  Evaluate  dict(${resp[0]["metadata"]["annotations"]["kubectl.kubernetes.io/last-applied-configuration"]})
+    [Return]  ${resp["stringData"]["notification-email"]}
+
+
+Check Email Is Present In Alertmanager ConfigMap
+    [Documentation]    Extract email from alertmanager ConfigMaps
+    [Arguments]        ${email_to_check}
+    ${resp} =    Oc Get  kind=ConfigMap  namespace=redhat-ods-monitoring  name=alertmanager
+    ${resp} =  Evaluate  str(${resp[0]["metadata"]["annotations"]["kubectl.kubernetes.io/last-applied-configuration"]})
+    Should Contain    ${resp}    ${email_to_check}
